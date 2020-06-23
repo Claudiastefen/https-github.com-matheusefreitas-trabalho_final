@@ -487,7 +487,7 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 		CONSTANT MAX_SUB : INTEGER;
 		CONSTANT MIN_SUB : INTEGER;
 		VARIABLE SUB : FIXED (MAX_SUB DOWNTO MIN_SUB);			    		--salva resultado da subtração
-		VARIABLE C, C1, M_UM : BIT;																--carry			
+		VARIABLE C : BIT;																--carry			
 		
 	   BEGIN
 
@@ -533,32 +533,15 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 			
 			END IF;
 			
-			IF ARG_R'HIGH = '0' THEN                                     --se for positivo faz complemento de 2 direto
-			   
-				FOR I IN ARG_R'LOW TO ARG_R'HIGH LOOP                     --complemento de 1
-			      ARG_R(I):= NOT ARG_R(I);
-			   END LOOP;
+			FOR I IN ARG_R'LOW TO ARG_R'HIGH LOOP                       --complemento de 1
+			   ARG_R(I):= NOT ARG_R(I);
+			END LOOP;
 			
-			   C1 := '1';                                                --inicia carry em um
-			   FOR I IN ARG_R'LOW TO ARG_R'HIGH LOOP                		--complemento de 2
-				   ARG_R(I)	:= ARG_R(I) XOR C1;
-				   C1			:= ARG_R(I) AND C1;
-			   END LOOP;
-				
-			ELSE                                                         --se for negativo faz complemento de 2 inverso
-			   
-				M_UM := '1';                                              --define o "número" -1
-				C1 := '0';                                                --inicia carry em zero
-			   FOR I IN ARG_R'LOW TO ARG_R'HIGH LOOP                		 --subtrai um
-				   ARG_R(I)	:= ARG_R(I) XOR M_UM XOR  C1;
-				   C1			:= ( ARG_R(I) AND M_UM ) XOR ( M_UM AND C1 ) XOR ( ARG_R(I) AND C1 ) ;
-			   END LOOP
-				
-				FOR I IN ARG_R'LOW TO ARG_R'HIGH LOOP                     --complemento de 1 inverso
-			      ARG_R(I):= NOT ARG_R(I);
-			   END LOOP;
-
-			END IF;
+			C1 := '1';                                                  --inicia carry em um
+			FOR I IN ARG_R'LOW TO ARG_R'HIGH LOOP								--complemento de 2
+				ARG_R(I)	:= ARG_R(I) XOR C1;
+				C1			:= ARG_R(I) AND C1;
+			END LOOP;
 			
 			C := '0';																	--inicia carry em zero
 			FOR I IN ARG_L'LOW TO ARG_L'HIGH LOOP								--procedimento de soma
@@ -566,7 +549,7 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 				C			:= ( ARG_L(I) AND ARG_R(I) ) OR ( ARG_L(I) AND C ) OR ( ARG_R(I) AND C );
 			END LOOP;
 	      
-	   RETURN SUB;                                           			-- retorna fixed
+	   RETURN SUB;                                          			-- retorna fixed
 		
    END FUNCTION;
 	
@@ -576,7 +559,7 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 		CONSTANT MAX_SUB : INTEGER;
 		CONSTANT MIN_SUB : INTEGER;
 		VARIABLE SUB : FIXED (MAX_SUB DOWNTO MIN_SUB);				   	--salva resultado da subtração
-		VARIABLE C, C1, M_UM : BIT;																--carry			
+		VARIABLE C : BIT;																--carry			
 		VARIABLE ARG_R_FIX : FIXED (MAX_IND DOWNTO 0);								
 		
 	   BEGIN
@@ -599,32 +582,15 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 			
 			END IF;																		--procedimento para ARG_L = ARG_R_FIX
 				
-			IF ARG_R'HIGH = '0' THEN                                     --se for positivo faz complemento de 2 direto
-			   
-				FOR I IN ARG_R'LOW TO ARG_R'HIGH LOOP                     --complemento de 1
-			      ARG_R(I):= NOT ARG_R(I);
-			   END LOOP;
+			FOR I IN ARG_R_FIX'LOW TO ARG_R_FIX'HIGH LOOP               --complemento de 1
+			   ARG_R_FIX(I):= NOT ARG_R_FIX(I);
+			END LOOP;
 			
-			   C1 := '1';                                                --inicia carry em um
-			   FOR I IN ARG_R'LOW TO ARG_R'HIGH LOOP                		--complemento de 2
-				   ARG_R(I)	:= ARG_R(I) XOR C1;
-				   C1			:= ARG_R(I) AND C1;
-			   END LOOP;
-				
-			ELSE                                                         --se for negativo faz complemento de 2 inverso
-			   
-				M_UM := '1';                                              --define o "número" -1
-				C1 := '0';                                                --inicia carry em zero
-			   FOR I IN ARG_R'LOW TO ARG_R'HIGH LOOP                		 --subtrai um
-				   ARG_R(I)	:= ARG_R(I) XOR M_UM XOR  C1;
-				   C1			:= ( ARG_R(I) AND M_UM ) XOR ( M_UM AND C1 ) XOR ( ARG_R(I) AND C1 ) ;
-			   END LOOP
-				
-				FOR I IN ARG_R'LOW TO ARG_R'HIGH LOOP                     --complemento de 1 inverso
-			      ARG_R(I):= NOT ARG_R(I);
-			   END LOOP;
-
-			END IF;
+			C1 := '1';                                                  --inicia carry em um
+			FOR I IN ARG_R_FIX'LOW TO ARG_R_FIX'HIGH LOOP					--complemento de 2
+				ARG_R_FIX(I) := ARG_R_FIX(I) XOR C1;
+				C1			    := ARG_R_FIX(I) AND C1;
+			END LOOP;
 			
 			--define tamanho do vetor SOMA
 			MAX_SUB := MAX_IND;												
@@ -646,7 +612,7 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 		CONSTANT MAX_SUB : INTEGER;
 		CONSTANT MIN_SUB : INTEGER;
 		VARIABLE SUB : FIXED (MAX_SUB DOWNTO MIN_SUB);			   		--salva resultado da subtração
-		VARIABLE C, C1, M_UM : BIT;																--carry			
+		VARIABLE C : BIT;																--carry			
 		VARIABLE ARG_L_FIX : FIXED (MAX_IND DOWNTO 0);								
 		
 	   BEGIN
@@ -669,32 +635,15 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 			
 			END IF;																				--procedimento para ARG_L_FIX = ARG_R
 				
-			IF ARG_R'HIGH = '0' THEN                                     --se for positivo faz complemento de 2 direto
-			   
-				FOR I IN ARG_R'LOW TO ARG_R'HIGH LOOP                     --complemento de 1
-			      ARG_R(I):= NOT ARG_R(I);
-			   END LOOP;
+			FOR I IN ARG_R'LOW TO ARG_R'HIGH LOOP                       --complemento de 1
+			   ARG_R(I):= NOT ARG_R(I);
+			END LOOP;
 			
-			   C1 := '1';                                                --inicia carry em um
-			   FOR I IN ARG_R'LOW TO ARG_R'HIGH LOOP                		--complemento de 2
-				   ARG_R(I)	:= ARG_R(I) XOR C1;
-				   C1			:= ARG_R(I) AND C1;
-			   END LOOP;
-				
-			ELSE                                                         --se for negativo faz complemento de 2 inverso
-			   
-				M_UM := '1';                                              --define o "número" -1
-				C1 := '0';                                                --inicia carry em zero
-			   FOR I IN ARG_R'LOW TO ARG_R'HIGH LOOP                		 --subtrai um
-				   ARG_R(I)	:= ARG_R(I) XOR M_UM XOR  C1;
-				   C1			:= ( ARG_R(I) AND M_UM ) XOR ( M_UM AND C1 ) XOR ( ARG_R(I) AND C1 ) ;
-			   END LOOP
-				
-				FOR I IN ARG_R'LOW TO ARG_R'HIGH LOOP                     --complemento de 1 inverso
-			      ARG_R(I):= NOT ARG_R(I);
-			   END LOOP;
-
-			END IF;
+			C1 := '1';                                                  --inicia carry em um
+			FOR I IN ARG_R'LOW TO ARG_R'HIGH LOOP								--complemento de 2
+				ARG_R(I)	:= ARG_R(I) XOR C1;
+				C1			:= ARG_R(I) AND C1;
+			END LOOP;
 			
 			--define tamanho do vetor SUB
 			MAX_SUB := MAX_IND;												
@@ -716,7 +665,7 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 		CONSTANT MAX_SUB : INTEGER;
 		CONSTANT MIN_SUB : INTEGER;
 		VARIABLE SUB : FIXED (MAX_SUB DOWNTO MIN_SUB);			   		--salva resultado da subtração
-		VARIABLE C, C1, M_UM : BIT;																--carry			
+		VARIABLE C : BIT;																--carry			
 		VARIABLE ARG_R_FIX : FIXED (+7 DOWNTO -8);								
 		
 	   BEGIN
@@ -766,32 +715,15 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 			
 			END IF;
 			
-			IF ARG_R'HIGH = '0' THEN                                     --se for positivo faz complemento de 2 direto
-			   
-				FOR I IN ARG_R'LOW TO ARG_R'HIGH LOOP                     --complemento de 1
-			      ARG_R(I):= NOT ARG_R(I);
-			   END LOOP;
+			FOR I IN ARG_R_FIX'LOW TO ARG_R_FIX'HIGH LOOP               --complemento de 1
+			   ARG_R_FIX(I):= NOT ARG_R_FIX(I);
+			END LOOP;
 			
-			   C1 := '1';                                                --inicia carry em um
-			   FOR I IN ARG_R'LOW TO ARG_R'HIGH LOOP                		--complemento de 2
-				   ARG_R(I)	:= ARG_R(I) XOR C1;
-				   C1			:= ARG_R(I) AND C1;
-			   END LOOP;
-				
-			ELSE                                                         --se for negativo faz complemento de 2 inverso
-			   
-				M_UM := '1';                                              --define o "número" -1
-				C1 := '0';                                                --inicia carry em zero
-			   FOR I IN ARG_R'LOW TO ARG_R'HIGH LOOP                		 --subtrai um
-				   ARG_R(I)	:= ARG_R(I) XOR M_UM XOR  C1;
-				   C1			:= ( ARG_R(I) AND M_UM ) XOR ( M_UM AND C1 ) XOR ( ARG_R(I) AND C1 ) ;
-			   END LOOP
-				
-				FOR I IN ARG_R'LOW TO ARG_R'HIGH LOOP                     --complemento de 1 inverso
-			      ARG_R(I):= NOT ARG_R(I);
-			   END LOOP;
-
-			END IF;
+			C1 := '1';                                                  --inicia carry em um
+			FOR I IN ARG_R_FIX'LOW TO ARG_R_FIX'HIGH LOOP					--complemento de 2
+				ARG_R_FIX(I) := ARG_R_FIX(I) XOR C1;
+				C1			    := ARG_R_FIX(I) AND C1;
+			END LOOP;
 			
 			C := '0';																	--inicia carry em zero
 			FOR I IN ARG_L'LOW TO ARG_L'HIGH LOOP								--procedimento de soma
@@ -809,7 +741,7 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 		CONSTANT MAX_SUB : INTEGER;
 		CONSTANT MIN_SUB : INTEGER;
 		VARIABLE SUB : FIXED (MAX_SUB DOWNTO MIN_SUB);				   	--salva resultado da subtração
-		VARIABLE C, C1, M_UM : BIT;																--carry			
+		VARIABLE C : BIT;																--carry			
 		VARIABLE ARG_L_FIX : FIXED (+7 DOWNTO -8);								
 		
 	   BEGIN
@@ -852,38 +784,21 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 				END IF;
 			
 			ELSE																			--procedimento para ARG_L_INT = ARG_R
+				
+			FOR I IN ARG_R'LOW TO ARG_R'HIGH LOOP                       --complemento de 1
+			   ARG_R(I):= NOT ARG_R(I);
+			END LOOP;
 			
-			--define tamanho do vetor SUB
+			C1 := '1';                                                  --inicia carry em um
+			FOR I IN ARG_R'LOW TO ARG_R'HIGH LOOP								--complemento de 2
+				ARG_R(I)	:= ARG_R(I) XOR C1;
+				C1			:= ARG_R(I) AND C1;
+			END LOOP;
+			
+			--define tamanho do vetor SOMA
 			MAX_SUB := ARG_R'HIGH;												
-			MIN_SUB := ARG_R'LOW;
+			MIN_SSUB := ARG_R'LOW;
 			
-			END IF;
-			
-			IF ARG_R'HIGH = '0' THEN                                     --se for positivo faz complemento de 2 direto
-			   
-				FOR I IN ARG_R'LOW TO ARG_R'HIGH LOOP                     --complemento de 1
-			      ARG_R(I):= NOT ARG_R(I);
-			   END LOOP;
-			
-			   C1 := '1';                                                --inicia carry em um
-			   FOR I IN ARG_R'LOW TO ARG_R'HIGH LOOP                		--complemento de 2
-				   ARG_R(I)	:= ARG_R(I) XOR C1;
-				   C1			:= ARG_R(I) AND C1;
-			   END LOOP;
-				
-			ELSE                                                         --se for negativo faz complemento de 2 inverso
-			   
-				M_UM := '1';                                              --define o "número" -1
-				C1 := '0';                                                --inicia carry em zero
-			   FOR I IN ARG_R'LOW TO ARG_R'HIGH LOOP                		 --subtrai um
-				   ARG_R(I)	:= ARG_R(I) XOR M_UM XOR  C1;
-				   C1			:= ( ARG_R(I) AND M_UM ) XOR ( M_UM AND C1 ) XOR ( ARG_R(I) AND C1 ) ;
-			   END LOOP
-				
-				FOR I IN ARG_R'LOW TO ARG_R'HIGH LOOP                     --complemento de 1 inverso
-			      ARG_R(I):= NOT ARG_R(I);
-			   END LOOP;
-
 			END IF;
 			
 			C := '0';																	--inicia carry em zero
