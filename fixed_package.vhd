@@ -41,7 +41,7 @@ END FIXED_PACKAGE;
 PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 
 --CONVERSÃO DE DADO INTEGER PARA FIXED
-   FUNCTION TO_FIXED(ARG: INTEGER; MAX_RANGE:FIXED_RANGE:= MAX_IND; MIN_RANGE: FIXED_RANGE:= 0) RETURN FIXED IS --(MAX_RANGE DOWNTO MIN_RANGE) 
+    FUNCTION TO_FIXED(ARG: INTEGER; MAX_RANGE:FIXED_RANGE:= MAX_IND; MIN_RANGE: FIXED_RANGE:= 0) RETURN FIXED IS --(MAX_RANGE DOWNTO MIN_RANGE) 
 	  VARIABLE ARG1: INTEGER;                             -- Argumento auxiliar que será dividido
 	  VARIABLE R: INTEGER;                                -- Resto da divisão
 	  VARIABLE DIV : INTEGER;                             -- Resultado da divisão
@@ -66,6 +66,9 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 		IF DIV = 0 THEN  F(N_BIT) := '0';                  -- o ultimo bit do numero é definido pelo resultado da ultima divisão
 		ELSE             F(N_BIT) := '1';
 		END IF;
+		
+		ASSERT N_BIT < MAX_RANGE;-- SE A CONVERSÃO PRECISAR DE MAIS CASAS QUE O DEFINIDO DA ERRO
+		
 		-- se a conversão dos bits tiver menos bits que o range definido 
            FOR i IN N_BIT+1 TO MAX_RANGE   LOOP  -- preenche com zero os bits restante 
 	      F(i) := '0';
@@ -899,16 +902,21 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 
 ------------------------- MULTIPLICAÇÃO FIXED FIXED ---------------------
 
-     FUNCTION "*"(ARG_L, ARG_R: FIXED) RETURN FIXED IS
+       FUNCTION "*"(ARG_L, ARG_R: FIXED) RETURN FIXED IS
 	    VARIABLE S : FIXED (MAX DOWNTO MIN); -- define o tamanho do vetor de resposta
 	    VARIABLE S1: FIXED (MAX DOWNTO MIN);
-            VARIABLE N : INTEGER;
+		 VARIABLE S2: FEXED (MAX DOWNTO MINS);
+       VARIABLE N : INTEGER;
 	    VARIABLE ARG_LC : FIXED ( ARG_L'RIGHT DOWNTO ARG_L'LEFT);  -- variavel auxiliar
 		 
 	 BEGIN
-           -- limites do fixed
+	 
+	 ASSERT (ARG_L'RIGHT + ARG_R'LEFT +1) < 16;
+	 
+           -- limites do fixed		
 	   MAX:= (ARG_L1'RIGHT + ARG_R'LEFT +1); 
 	   MIN:= (ARG_R'LEFT + ARG_L'LEFT);
+		MINS:= (16 -(ARG_L'RIGHT + ARG_R'LEFT +1)); -- para a saida de tamanho correto
 	   S1:= 0;
 		 -- faz a multiplicação dos fixed
 		FOR I IN ARG_R'LEFT TO ARG_R'RIGHT LOOP -- o numero de argumentos de arg_r
@@ -936,7 +944,7 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 		    S(S'LEFT+K) := NOT ARG_LC(ARG_L'RIGHT);
 		    END LOOP;
 			
-			ELSE
+			ELSE -- se for positivo
 			
 			 FOR K IN ARG_L'LEFT TO ARG_L'RIGHT LOOP -- coloca o valor de arg_l
 		    S(S'LEFT+N) := ARG_L(K);
@@ -948,7 +956,7 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 		    END LOOP;
 			END IF;
 			
-		  ELSE
+		  ELSE -- se não estiver na ultima linha
 			
 		    FOR K IN ARG_L'LEFT TO ARG_L'RIGHT LOOP -- coloca o valor de arg_l
 		    S(S'LEFT+N) := ARG_L(K);
@@ -966,22 +974,31 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 		  END IF;
 		 END LOOP;
 		 
-	 RETURN S1;
+		 FOR I IN MAX DOWNTO MINS LOOP -- PASSA PARA UM VETOR DE 16 BITS
+		  S2(I) := S1(I);
+		 END LOOP;
+		 
+	 RETURN S2;
 	 END FUNCTION;
 	 
 -------------------MULTIPLICAÇÃO FIXED INTEGER ------------------------	 
 	 FUNCTION "*"(ARG_L: FIXED; ARG_R: INTEGER) RETURN FIXED IS
-	  VARIABLE ARG_R1: FIEXED(MAX_IND DOWNTO 0);
+	  VARIABLE ARG_R1: FIEXED(ARG_L'RIGHT DOWNTO ARG_L'LEFT);
 	  VARIABLE S : FIXED (MAX DOWNTO MIN); -- define o tamanho do vetor de resposta
 	  VARIABLE S1: FIXED (MAX DOWNTO MIN);
+	  VARIABLE S2: FIXED (MAX DOWNTO MINS);
 	  VARIABLE N : INTEGER;
 	  VARIABLE ARG_LC : FIXED ( ARG_L'RIGHT DOWNTO ARG_L'LEFT); -- arg_l auxiliar
 		
 	BEGIN
-	  ARG_R1:= TO_FIXEDI(ARG_R); -- FUNÇÃO DE CONVERSÃO FEITA ANTERIORMENTE
+	  ARG_R1:= TO_FIXEDI(ARG_R,ARG_L'RIGHT,ARG_L'LEFT); -- FUNÇÃO DE CONVERSÃO FEITA ANTERIORMENTE
 	  
+	  ASSERT (ARG_L'RIGHT + ARG_R1'LEFT +1) < 16;
+	  
+	  -- LIMITES DOS FIXEDS DE RESULTADO DO PRODUTO
 	   MAX:= (ARG_L'RIGHT + ARG_R1'LEFT +1);
 		MIN:= (ARG_R1'LEFT + ARG_L'LEFT);
+		MINS:= (16 -(ARG_L'RIGHT + ARG_R1'LEFT +1)); -- PARA SAIDA DE TAMANHO CORRETO
 		S1:= 0;
 		 -- faz a multiplicação dos fixed
 		FOR I IN ARG_R1'LEFT TO ARG_R1'RIGHT LOOP
@@ -1000,7 +1017,7 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 		  IF I = ARG_R1'RIGHT THEN -- verifica se está na ultima linha
 		   IF ARG_R(ARG_R1'RIGHT) = '1' THEN -- se for negativo faz o complemento de 2
 			 ARG_LC := ARG_L + 1;
-			 FOR K IN ARG_L'LEFT TO ARG_L'RIGHT LOOP
+			 FOR K IN ARG_L'LEFT TO ARG_L'RIGHT LOOP -- coloca ele na posição de s correspondente
 		         S(S'LEFT+N) := NOT ARG_LC(K);
 			 N := N+1;
 		    END LOOP;
@@ -1023,12 +1040,12 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 			
 		  ELSE -- não está na ultima linha
 			
-		    FOR K IN ARG_L'LEFT TO ARG_L'RIGHT LOOP
+		    FOR K IN ARG_L'LEFT TO ARG_L'RIGHT LOOP -- coloca o arg_l  em s na posição correspondente
 		    S(S'LEFT+N) := ARG_L(K);
 			 N := N+1;
 		    END LOOP;
 			 
-			 FOR K IN N TO S'RIGHT LOOP
+			 FOR K IN N TO S'RIGHT LOOP -- coloca o valor de positivo ou negativo nas proximas posições
 		    S(S'LEFT+K) := ARG_L(ARG_L'RIGHT);
 		    END LOOP;
 			
@@ -1039,68 +1056,77 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 		  END IF;
 		 END LOOP;
 		 
-	 RETURN S1;
+		 FOR I IN MAX DOWNTO MINS LOOP -- PASSA PARA UM VETOR DE 16 BITS
+		  S2(I) := S1(I);
+		 END LOOP;
+		 
+	 RETURN S2;
 	 END FUNCTION;
 	 
 	 -----------------------MULTIPLICAÇÃO INTEGER FIXED -------------------------------
 	 FUNCTION "*"(ARG_L: INTEGER; ARG_R: FIXED) RETURN FIXED IS
-	  VARIABLE ARG_L1: FIEXED(MAX_IND DOWNTO 0);
+	  VARIABLE ARG_L1: FIEXED(ARG_R'RIGHT DOWNTO ARG_R'LEFT);
 	  VARIABLE S : FIXED (MAX DOWNTO MIN); -- define o tamanho do vetor de resposta
 	  VARIABLE S1: FIXED (MAX DOWNTO MIN);
+	  VARIABLE S2: FIXED (MAX DOWNTO MINS);
 	  VARIABLE N : INTEGER;
 	  
 	 BEGIN
-	   ARG_L1:= TO_FIXEDI(ARG_L); -- FUNÇÃO DE CONVERSÃO FEITA ANTERIORMENTE
+	   ARG_L1:= TO_FIXEDI(ARG_L, ARG_R'RIGHT, ARG_R'LEFT); -- FUNÇÃO DE CONVERSÃO FEITA ANTERIORMENTE
+		
+		ASSERT (ARG_L1'RIGHT + ARG_R'LEFT +1) < 16;
 	  
+	  -- limite para os fixed
 	   MAX:= (ARG_L1'RIGHT + ARG_R'LEFT +1);
 		MIN:= (ARG_R'LEFT + ARG_L1'LEFT);
+		MINS:= (16 -(ARG_L1'RIGHT + ARG_R'LEFT +1));-- limite para a saida com tamanho correto
 		S1:= 0;
 		 -- faz a multiplicação dos fixed
 		FOR I IN ARG_R'LEFT TO ARG_R'RIGHT LOOP
 		
-		 IF ARG_R(I) = 0 THEN
+		 IF ARG_R(I) = 0 THEN -- caso o bit correspondente seja 0
 		  S:= 0;
 		 ELSE
 		  N := 0;
-		  IF i > ARG_R'LEFT THEN
+		  IF i > ARG_R'LEFT THEN  -- coloca zeros de acordo com a linha correspondente
 		    FOR K IN (ARG_R'LEFT) TO i LOOP
 		    S(S'LEFT+N) := '0';
 			 N := N + 1;
 		    END LOOP;
 		  END IF;
 		  
-		  IF I = ARG_R'RIGHT THEN
-		   IF ARG_R(ARG_R'RIGHT) = '1' THEN
-			 ARG_L1 := ARG_L1 + 1;
+		  IF I = ARG_R'RIGHT THEN -- vefifica se esta na ultima linha
+		   IF ARG_R(ARG_R'RIGHT) = '1' THEN      -- verifica se é negativo
+			 ARG_L1 := ARG_L1 + 1;                 -- faz o compplemento de 2 
 			 FOR K IN ARG_L1'LEFT TO ARG_L1'RIGHT LOOP
 		    S(S'LEFT+N) := NOT ARG_L1(K);
 			 N := N+1;
 		    END LOOP;
 	     
-		    FOR K IN N TO S'RIGHT LOOP
+		    FOR K IN N TO S'RIGHT LOOP -- coloca os zeros ou uns conforme o umtilo bit de arg_l 
 		    S(S'LEFT+K) := NOT ARG_L1(ARG_L1'RIGHT);
 		    END LOOP;
 			
-			ELSE
+			ELSE     -- é positivo
 			
-			 FOR K IN ARG_L1'LEFT TO ARG_L1'RIGHT LOOP
+			 FOR K IN ARG_L1'LEFT TO ARG_L1'RIGHT LOOP -- coloca arg_l na posição correspondente
 		    S(S'LEFT+N) := ARG_L1(K);
 			 N := N+1;
 		    END LOOP;
 			 
-			 FOR K IN N TO S'RIGHT LOOP
+			 FOR K IN N TO S'RIGHT LOOP  -- preenche conforme o sinal de arg_l
 		    S(S'LEFT+K) := ARG_L1(ARG_L1'RIGHT);
 		    END LOOP;
 			END IF;
 			
-		  ELSE
+		  ELSE      -- não é a ultima linha
 			
-		    FOR K IN ARG_L1'LEFT TO ARG_L1'RIGHT LOOP
+		    FOR K IN ARG_L1'LEFT TO ARG_L1'RIGHT LOOP -- coloca arg_l na posição correspondente
 		    S(S'LEFT+N) := ARG_L1(K);
 			 N := N+1;
 		    END LOOP;
 			 
-			 FOR K IN N TO S'RIGHT LOOP
+			 FOR K IN N TO S'RIGHT LOOP              -- preenche conforme o sinal de arg_l
 		    S(S'LEFT+K) := ARG_L1(ARG_L1'RIGHT);
 		    END LOOP;
 			
@@ -1111,69 +1137,78 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 		  END IF;
 		 END LOOP;
 		 
-	 RETURN S1;
+		 FOR I IN MAX DOWNTO MINS LOOP -- PASSA PARA UM VETOR DE 16 BITS
+		  S2(I) := S1(I);
+		 END LOOP;
+		 
+	 RETURN S2;
 	 END FUNCTION;
 --------------------------MULTIPLICAÇÃO FIXED REAL ------------------------------------	 
 	 FUNCTION "*"(ARG_L: FIXED; ARG_R: REAL) RETURN FIXED IS
-	  VARIABLE ARG_R1: FIEXED(+7 DOWNTO -8);
+	  VARIABLE ARG_R1: FIEXED(ARG_L'RIGHT DOWNTO ARG_L'LEFT);
 	  VARIABLE S : FIXED (MAX DOWNTO MIN); -- define o tamanho do vetor de resposta
 	  VARIABLE S1: FIXED (MAX DOWNTO MIN);
+	  VARIABLE S2: FIXED (MAX DOWNTO MINS);
 	  VARIABLE N : INTEGER;
 	  VARIABLE ARG_LC : FIXED ( ARG_L'RIGHT DOWNTO ARG_L'LEFT);
 	  
 	 BEGIN
-	  ARG_R1:= TO_FIXED(ARG_R,7,-8); -- FUNÇÃO DE CONVERSÃO FEITA ANTERIORMENTE
+	  ARG_R1:= TO_FIXED(ARG_R,ARG_L'RIGHT,ARG_L'LEFT); -- FUNÇÃO DE CONVERSÃO FEITA ANTERIORMENTE
 	  
+	  ASSERT (ARG_L'RIGHT + ARG_R1'LEFT +1) < 16; -- da erro se a parte inteira é maior que 16
 	  
+	  -- limites do fixed
 	   MAX:= (ARG_L'RIGHT + ARG_R1'LEFT +1);
 		MIN:= (ARG_R1'LEFT + ARG_L'LEFT);
+		MINS:= (16 -(ARG_L'RIGHT + ARG_R1'LEFT +1));-- saida do tamanho correto
 		S1:= 0;
 		 -- faz a multiplicação dos fixed
 		FOR I IN ARG_R1'LEFT TO ARG_R1'RIGHT LOOP
 		
-		 IF ARG_R1(I) = 0 THEN
+		 IF ARG_R1(I) = 0 THEN  -- verifica se o bit correspondete é zero
 		  S:= 0;
+		  
 		 ELSE
 		  N := 0;
-		  IF i > ARG_R1'LEFT THEN
+		  IF i > ARG_R1'LEFT THEN        -- preenche com zeros conforme a linha
 		    FOR K IN (ARG_R1'LEFT) TO i LOOP
 		    S(S'LEFT+N) := '0';
 			 N := N + 1;
 		    END LOOP;
 		  END IF;
 		  
-		  IF I = ARG_R1'RIGHT THEN
-		   IF ARG_R(ARG_R1'RIGHT) = '1' THEN
-			 ARG_LC := ARG_L + 1;
+		  IF I = ARG_R1'RIGHT THEN  -- verifica se está na ultima linha
+		   IF ARG_R(ARG_R1'RIGHT) = '1' THEN -- verifica se é negativo
+			 ARG_LC := ARG_L + 1;             -- faz o complemento de 2
 			 FOR K IN ARG_L'LEFT TO ARG_L'RIGHT LOOP
-		    S(S'LEFT+N) := NOT ARG_LC(K);
+		    S(S'LEFT+N) := NOT ARG_LC(K);      -- coloca o complemento na posição corespondente
 			 N := N+1;
 		    END LOOP;
 	     
-		    FOR K IN N TO S'RIGHT LOOP
+		    FOR K IN N TO S'RIGHT LOOP            -- preenche conforme o sinal do complemento
 		    S(S'LEFT+K) := NOT ARG_LC(ARG_L'RIGHT);
 		    END LOOP;
 			
-			ELSE
+			ELSE -- é positivo
 			
-			 FOR K IN ARG_L'LEFT TO ARG_L'RIGHT LOOP
+			 FOR K IN ARG_L'LEFT TO ARG_L'RIGHT LOOP -- coloca arg_l na posição correspondente
 		    S(S'LEFT+N) := ARG_L(K);
 			 N := N+1;
 		    END LOOP;
 			 
 			 FOR K IN N TO S'RIGHT LOOP
-		    S(S'LEFT+K) := ARG_L(ARG_L'RIGHT);
+		    S(S'LEFT+K) := ARG_L(ARG_L'RIGHT); -- preenche conforme o sinal de arg_l
 		    END LOOP;
 			END IF;
 			
 		  ELSE
 			
-		    FOR K IN ARG_L'LEFT TO ARG_L'RIGHT LOOP
+		    FOR K IN ARG_L'LEFT TO ARG_L'RIGHT LOOP -- coloca arg_l na posição correspondente
 		    S(S'LEFT+N) := ARG_L(K);
 			 N := N+1;
 		    END LOOP;
 			 
-			 FOR K IN N TO S'RIGHT LOOP
+			 FOR K IN N TO S'RIGHT LOOP       -- preenche conforme o sinal de arg_l
 		    S(S'LEFT+K) := ARG_L(ARG_L'RIGHT);
 		    END LOOP;
 			
@@ -1184,81 +1219,93 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 		  END IF;
 		 END LOOP;
 		 
+		 FOR I IN MAX DOWNTO MINS LOOP -- PASSA PARA UM VETOR DE 16 BITS
+		  S2(I) := S1(I);
+		 END LOOP;
 		 
-	 RETURN S1;
+	 RETURN S2;
 	 END FUNCTION;
 	 
 ----------------------- MULTIPLICAÇÃO REAL FIXED --------------------------------------	 
 	 FUNCTION "*"(ARG_L: REAL; ARG_R: FIXED) RETURN FIXED IS
-	  VARIABLE ARG_L1: FIEXED(7 DOWNTO -8);
+	  VARIABLE ARG_L1: FIEXED(ARG_R'RIGHT DOWNTO ARG_R'LEFT);
 	  VARIABLE S : FIXED (MAX DOWNTO MIN); -- define o tamanho do vetor de resposta
 	  VARIABLE S1: FIXED (MAX DOWNTO MIN);
+	  VARIABLE S2: FIXED (MAX DOWNTO MINS);
 	  VARIABLE N : INTEGER;
-		 
-	 BEGIN
-	  ARG_L1:= TO_FIXED(ARG_L,7,-8); -- FUNÇÃO DE CONVERSÃO FEITA ANTERIORMENTE
 	  
+	 BEGIN
+	  ARG_L1:= TO_FIXED(ARG_L,ARG_R'RIGHT,ARG_R'LEFT); -- FUNÇÃO DE CONVERSÃO FEITA ANTERIORMENTE
+	  
+	  ASSERT (ARG_L1'RIGHT + ARG_R'LEFT +1) < 16; -- da erro se a parte inteira é maior que 16
+	  
+	  -- limites do fixed
 	   MAX:= (ARG_L1'RIGHT + ARG_R'LEFT +1);
 		MIN:= (ARG_R'LEFT + ARG_L1'LEFT);
+		MINS:= (16 -(ARG_L1'RIGHT + ARG_R'LEFT +1));-- saida do tamanho correto
 		S1:= 0;
 		 -- faz a multiplicação dos fixed
 		FOR I IN ARG_R'LEFT TO ARG_R'RIGHT LOOP
 		
-		 IF ARG_R(I) = 0 THEN
+		 IF ARG_R(I) = 0 THEN  -- verifica se o bit correspondete é zero
 		  S:= 0;
+		  
 		 ELSE
 		  N := 0;
-		  IF i > ARG_R'LEFT THEN
+		  IF i > ARG_R'LEFT THEN        -- preenche com zeros conforme a linha
 		    FOR K IN (ARG_R'LEFT) TO i LOOP
 		    S(S'LEFT+N) := '0';
 			 N := N + 1;
 		    END LOOP;
 		  END IF;
 		  
-		  IF I = ARG_R'RIGHT THEN
-		   IF ARG_R(ARG_R'RIGHT) = '1' THEN
-			 ARG_L1 := ARG_L1 + 1;
+		  IF I = ARG_R'RIGHT THEN  -- verifica se está na ultima linha
+		   IF ARG_R(ARG_R'RIGHT) = '1' THEN -- verifica se é negativo
+			 ARG_L1 := ARG_L1 + 1;             -- faz o complemento de 2
 			 FOR K IN ARG_L1'LEFT TO ARG_L1'RIGHT LOOP
-		    S(S'LEFT+N) := NOT ARG_L1(K);
+		    S(S'LEFT+N) := NOT ARG_L1(K);      -- coloca o complemento na posição corespondente
 			 N := N+1;
 		    END LOOP;
 	     
-		    FOR K IN N TO S'RIGHT LOOP
+		    FOR K IN N TO S'RIGHT LOOP            -- preenche conforme o sinal do complemento
 		    S(S'LEFT+K) := NOT ARG_L1(ARG_L1'RIGHT);
 		    END LOOP;
 			
-			ELSE
+			ELSE -- é positivo
 			
-			 FOR K IN ARG_L1'LEFT TO ARG_L1'RIGHT LOOP
+			 FOR K IN ARG_L1'LEFT TO ARG_L1'RIGHT LOOP -- coloca arg_l na posição correspondente
 		    S(S'LEFT+N) := ARG_L1(K);
 			 N := N+1;
 		    END LOOP;
 			 
 			 FOR K IN N TO S'RIGHT LOOP
-		    S(S'LEFT+K) := ARG_L1(ARG_L1'RIGHT);
+		    S(S'LEFT+K) := ARG_L1(ARG_L1'RIGHT); -- preenche conforme o sinal de arg_l
 		    END LOOP;
 			END IF;
 			
 		  ELSE
 			
-		    FOR K IN ARG_L1'LEFT TO ARG_L1'RIGHT LOOP
+		    FOR K IN ARG_L1'LEFT TO ARG_L1'RIGHT LOOP -- coloca arg_l na posição correspondente
 		    S(S'LEFT+N) := ARG_L1(K);
 			 N := N+1;
 		    END LOOP;
 			 
-			 FOR K IN N TO S'RIGHT LOOP
+			 FOR K IN N TO S'RIGHT LOOP       -- preenche conforme o sinal de arg_l
 		    S(S'LEFT+K) := ARG_L1(ARG_L1'RIGHT);
 		    END LOOP;
 			
 			END IF;
 		 
-                S1 := "+"(S, S1); -- SOMA DE DOIS FIXED
+        S1 := "+"(S, S1); -- SOMA DE DOIS FIXED
 		  
 		  END IF;
 		 END LOOP;
 		 
+		 FOR I IN MAX DOWNTO MINS LOOP -- PASSA PARA UM VETOR DE 16 BITS
+		  S2(I) := S1(I);
+		 END LOOP;
 		 
-	 RETURN S1;
+	 RETURN S2;
 	 END FUNCTION;
 	
 END FIXED_PACKAGE;
