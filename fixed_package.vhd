@@ -907,7 +907,7 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 		 
 	 BEGIN
            -- limites do fixed
-	   MAX:= (16 - ARG_R'LEFT + ARG_L'LEFT); 
+	   MAX:= (ARG_L1'RIGHT + ARG_R'LEFT +1); 
 	   MIN:= (ARG_R'LEFT + ARG_L'LEFT);
 	   S1:= 0;
 		 -- faz a multiplicação dos fixed
@@ -966,9 +966,6 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 		  END IF;
 		 END LOOP;
 		 
-		 
-		 ASSERT (S1'LENGTH < 16); -- verifica o tamanho da reposta para ver se tem menos que 16 bits
-		 
 	 RETURN S1;
 	 END FUNCTION;
 	 
@@ -978,33 +975,33 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 	  VARIABLE S : FIXED (MAX DOWNTO MIN); -- define o tamanho do vetor de resposta
 	  VARIABLE S1: FIXED (MAX DOWNTO MIN);
 	  VARIABLE N : INTEGER;
-	  VARIABLE ARG_LC : FIXED ( ARG_L'RIGHT DOWNTO ARG_L'LEFT);
+	  VARIABLE ARG_LC : FIXED ( ARG_L'RIGHT DOWNTO ARG_L'LEFT); -- arg_l auxiliar
 		
 	BEGIN
 	  ARG_R1:= TO_FIXEDI(ARG_R); -- FUNÇÃO DE CONVERSÃO FEITA ANTERIORMENTE
 	  
-	   MAX:= (16 - ARG_R1'LEFT + ARG_L'LEFT);
+	   MAX:= (ARG_L'RIGHT + ARG_R1'LEFT +1);
 		MIN:= (ARG_R1'LEFT + ARG_L'LEFT);
 		S1:= 0;
 		 -- faz a multiplicação dos fixed
 		FOR I IN ARG_R1'LEFT TO ARG_R1'RIGHT LOOP
 		
-		 IF ARG_R1(I) = 0 THEN
+		 IF ARG_R1(I) = 0 THEN -- verifica se o bit é zero
 		  S:= 0;
 		 ELSE
 		  N := 0;
-		  IF i > ARG_R1'LEFT THEN
+		  IF i > ARG_R1'LEFT THEN -- coloca o tanto de zeros necessarios conforme a linha
 		    FOR K IN (ARG_R1'LEFT) TO i LOOP
 		    S(S'LEFT+N) := '0';
 			 N := N + 1;
 		    END LOOP;
 		  END IF;
 		  
-		  IF I = ARG_R1'RIGHT THEN
-		   IF ARG_R(ARG_R1'RIGHT) = '1' THEN
+		  IF I = ARG_R1'RIGHT THEN -- verifica se está na ultima linha
+		   IF ARG_R(ARG_R1'RIGHT) = '1' THEN -- se for negativo faz o complemento de 2
 			 ARG_LC := ARG_L + 1;
 			 FOR K IN ARG_L'LEFT TO ARG_L'RIGHT LOOP
-		    S(S'LEFT+N) := NOT ARG_LC(K);
+		         S(S'LEFT+N) := NOT ARG_LC(K);
 			 N := N+1;
 		    END LOOP;
 	     
@@ -1012,19 +1009,19 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 		    S(S'LEFT+K) := NOT ARG_LC(ARG_L'RIGHT);
 		    END LOOP;
 			
-			ELSE
+		    ELSE -- não é negativo
 			
-			 FOR K IN ARG_L'LEFT TO ARG_L'RIGHT LOOP
-		    S(S'LEFT+N) := ARG_L(K);
+			 FOR K IN ARG_L'LEFT TO ARG_L'RIGHT LOOP -- coloca o arg_l  em s na posição correspondente
+		         S(S'LEFT+N) := ARG_L(K);
 			 N := N+1;
-		    END LOOP;
+		         END LOOP;
 			 
 			 FOR K IN N TO S'RIGHT LOOP
-		    S(S'LEFT+K) := ARG_L(ARG_L'RIGHT);
-		    END LOOP;
-			END IF;
+		         S(S'LEFT+K) := ARG_L(ARG_L'RIGHT);
+		         END LOOP;
+		    END IF;
 			
-		  ELSE
+		  ELSE -- não está na ultima linha
 			
 		    FOR K IN ARG_L'LEFT TO ARG_L'RIGHT LOOP
 		    S(S'LEFT+N) := ARG_L(K);
@@ -1055,7 +1052,7 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 	 BEGIN
 	   ARG_L1:= TO_FIXEDI(ARG_L); -- FUNÇÃO DE CONVERSÃO FEITA ANTERIORMENTE
 	  
-	   MAX:= (16 - ARG_R'LEFT + ARG_L1'LEFT);
+	   MAX:= (ARG_L1'RIGHT + ARG_R'LEFT +1);
 		MIN:= (ARG_R'LEFT + ARG_L1'LEFT);
 		S1:= 0;
 		 -- faz a multiplicação dos fixed
@@ -1109,7 +1106,7 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 			
 			END IF;
 		 
-        S1 := "+"(S, S1); -- SOMA DE DOIS FIXED
+               S1 := "+"(S, S1); -- SOMA DE DOIS FIXED
 		  
 		  END IF;
 		 END LOOP;
@@ -1128,7 +1125,7 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 	  ARG_R1:= TO_FIXED(ARG_R,7,-8); -- FUNÇÃO DE CONVERSÃO FEITA ANTERIORMENTE
 	  
 	  
-	   MAX:= (16 - ARG_R1'LEFT + ARG_L'LEFT);
+	   MAX:= (ARG_L'RIGHT + ARG_R1'LEFT +1);
 		MIN:= (ARG_R1'LEFT + ARG_L'LEFT);
 		S1:= 0;
 		 -- faz a multiplicação dos fixed
@@ -1188,8 +1185,6 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 		 END LOOP;
 		 
 		 
-		 ASSERT (S1'LENGTH < 16); -- verifica o tamanho da reposta para ver se tem menos que 16 bits
-		 
 	 RETURN S1;
 	 END FUNCTION;
 	 
@@ -1203,7 +1198,7 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 	 BEGIN
 	  ARG_L1:= TO_FIXED(ARG_L,7,-8); -- FUNÇÃO DE CONVERSÃO FEITA ANTERIORMENTE
 	  
-	   MAX:= (16-ARG_R'LEFT + ARG_L1'LEFT);
+	   MAX:= (ARG_L1'RIGHT + ARG_R'LEFT +1);
 		MIN:= (ARG_R'LEFT + ARG_L1'LEFT);
 		S1:= 0;
 		 -- faz a multiplicação dos fixed
