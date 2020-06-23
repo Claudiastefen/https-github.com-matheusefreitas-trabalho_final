@@ -482,7 +482,7 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
    END FUNCTION;
 	
   -----------------------------------------------   SUBTRAÇÃO FIXED + FIXED   -------------------------------------------------------
-	FUNCTION "+" (ARG_L, ARG_R: FIXED) RETURN FIXED IS
+	FUNCTION "-" (ARG_L, ARG_R: FIXED) RETURN FIXED IS
 		
 		CONSTANT MAX_SUB : INTEGER;
 		CONSTANT MIN_SUB : INTEGER;
@@ -571,7 +571,7 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
    END FUNCTION;
 	
 	--------------------------------------------   SUBTRAÇÃO FIXED + INTEGER   --------------------------------------------------------- 
-	FUNCTION "+" (ARG_L: FIXED; ARG_R: INTEGER) RETURN FIXED IS
+	FUNCTION "-" (ARG_L: FIXED; ARG_R: INTEGER) RETURN FIXED IS
 		
 		CONSTANT MAX_SUB : INTEGER;
 		CONSTANT MIN_SUB : INTEGER;
@@ -641,7 +641,7 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
    END FUNCTION;
 	
 	--------------------------------------------   SUBTRAÇÃO INTEGER + FIXED   --------------------------------------------------------- 
-	FUNCTION "+" (ARG_L: INTEGER; ARG_R: FIXED) RETURN FIXED IS
+	FUNCTION "-" (ARG_L: INTEGER; ARG_R: FIXED) RETURN FIXED IS
 		
 		CONSTANT MAX_SUB : INTEGER;
 		CONSTANT MIN_SUB : INTEGER;
@@ -711,7 +711,7 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
    END FUNCTION;
 
 	--------------------------------------------   SUBTRAÇÃO FIXED + REAL   --------------------------------------------------------- 
-	FUNCTION "+" (ARG_L: FIXED; ARG_R: REAL) RETURN FIXED IS
+	FUNCTION "-" (ARG_L: FIXED; ARG_R: REAL) RETURN FIXED IS
 		
 		CONSTANT MAX_SUB : INTEGER;
 		CONSTANT MIN_SUB : INTEGER;
@@ -804,7 +804,7 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
    END FUNCTION;
 	
 	--------------------------------------------   SUBTRAÇÃO REAL + FIXED   --------------------------------------------------------- 
-	FUNCTION "+" (ARG_L: REAL; ARG_R: FIXED) RETURN FIXED IS
+	FUNCTION "-" (ARG_L: REAL; ARG_R: FIXED) RETURN FIXED IS
 		
 		CONSTANT MAX_SUB : INTEGER;
 		CONSTANT MIN_SUB : INTEGER;
