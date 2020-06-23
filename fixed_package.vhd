@@ -15,21 +15,21 @@ PACKAGE FIXED_PACKAGE IS
   FUNCTION TO_REAL(ARG: FIXED) RETURN REAL;
   
  --FUNÇÕES ARITMÉTICAS (SOMA)
-	FUNCTION "+" (ARG_L, ARG_R: FIXED) RETURN FIXED;
-	FUNCTION "+" (ARG_L: FIXED; ARG_R: INTEGER) RETURN FIXED;
-	FUNCTION "+" (ARG_L: INTEGER; ARG_R: FIXED) RETURN FIXED;
-	FUNCTION "+" (ARG_L: FIXED; ARG_R: REAL) RETURN FIXED;
-	FUNCTION "+" (ARG_L: REAL; ARG_R: FIXED) RETURN FIXED;
+  FUNCTION "+" (ARG_L, ARG_R: FIXED) RETURN FIXED;
+  FUNCTION "+" (ARG_L: FIXED; ARG_R: INTEGER) RETURN FIXED;
+  FUNCTION "+" (ARG_L: INTEGER; ARG_R: FIXED) RETURN FIXED;
+  FUNCTION "+" (ARG_L: FIXED; ARG_R: REAL) RETURN FIXED;
+  FUNCTION "+" (ARG_L: REAL; ARG_R: FIXED) RETURN FIXED;
 
  --FUNÇÕES ARITMÉTICAS (SUBTRAÇAO)
-	FUNCTION "-" (ARG_L, ARG_R: FIXED) RETURN FIXED;
+   FUNCTION "-" (ARG_L, ARG_R: FIXED) RETURN FIXED;
    FUNCTION "-" (ARG_L: FIXED; ARG_R: INTEGER) RETURN FIXED;
    FUNCTION "-" (ARG_L: INTEGER; ARG_R: FIXED) RETURN FIXED;
    FUNCTION "-" (ARG_L: FIXED; ARG_R: REAL) RETURN FIXED;
    FUNCTION "-" (ARG_L: REAL; ARG_R: FIXED) RETURN FIXED;
 	
  --FUNÇÕES ARITMÉTICAS (MULTIPLICAÇÃO)
-	FUNCTION "*"(ARG_L, ARG_R: FIXED) RETURN FIXED;
+   FUNCTION "*"(ARG_L, ARG_R: FIXED) RETURN FIXED;
    FUNCTION "*"(ARG_L: FIXED; ARG_R: INTEGER) RETURN FIXED;
    FUNCTION "*"(ARG_L: INTEGER; ARG_R: FIXED) RETURN FIXED;
    FUNCTION "*"(ARG_L: FIXED; ARG_R: REAL) RETURN FIXED;
@@ -50,14 +50,8 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 	      
 
 	  BEGIN
-	   N_BIT := MIN_RANGE;                                -- a primeira posição é o maximo (MSB)
-		ARG1 := ARG;
-		
-		 IF (ARG < 0.0) THEN                                  -- atribui o sinal de ARG ao fixed
-	      F(MAX_RANGE) := '1';
-	   ELSE
-	      F(MAX_RANGE) := '0';
-	   END IF;
+	   N_BIT := MIN_RANGE;                                -- a primeira posição é o mínimo (LSB)
+	   ARG1 := ARG;
 		
 	   ABC:WHILE( DIV /= 1) OR (DIV /= 0 ) LOOP           -- divide até que o resultado da divisão seja 0 ou 1
 		DIV :=ARG1/2;                                      -- divide por 2
@@ -73,9 +67,14 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 		ELSE             F(N_BIT) := '1';
 		END IF;
 		-- se a conversão dos bits tiver menos bits que o range definido 
-		 FOR i IN N_BIT TO MAX_RANGE - 1 LOOP  -- preenche com zero os bits restante 
+           FOR i IN N_BIT+1 TO MAX_RANGE   LOOP  -- preenche com zero os bits restante 
 	      F(i) := '0';
 	   END LOOP;
+         
+         IF (ARG < 0) THEN                                  --  verifica se o argumento é negativo e faz o complemento de 2
+	      F := F-1;
+              F := NOT F;
+	 END IF;
 		  
 	RETURN F;
 	END FUNCTION;
