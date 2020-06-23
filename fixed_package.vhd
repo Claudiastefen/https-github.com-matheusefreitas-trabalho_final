@@ -15,21 +15,21 @@ PACKAGE FIXED_PACKAGE IS
   FUNCTION TO_REAL(ARG: FIXED) RETURN REAL;
   
  --FUNÇÕES ARITMÉTICAS (SOMA)
-	FUNCTION "+" (ARG_L, ARG_R: FIXED) RETURN FIXED;
-	FUNCTION "+" (ARG_L: FIXED; ARG_R: INTEGER) RETURN FIXED;
-	FUNCTION "+" (ARG_L: INTEGER; ARG_R: FIXED) RETURN FIXED;
-	FUNCTION "+" (ARG_L: FIXED; ARG_R: REAL) RETURN FIXED;
-	FUNCTION "+" (ARG_L: REAL; ARG_R: FIXED) RETURN FIXED;
+  FUNCTION "+" (ARG_L, ARG_R: FIXED) RETURN FIXED;
+  FUNCTION "+" (ARG_L: FIXED; ARG_R: INTEGER) RETURN FIXED;
+  FUNCTION "+" (ARG_L: INTEGER; ARG_R: FIXED) RETURN FIXED;
+  FUNCTION "+" (ARG_L: FIXED; ARG_R: REAL) RETURN FIXED;
+  FUNCTION "+" (ARG_L: REAL; ARG_R: FIXED) RETURN FIXED;
 
  --FUNÇÕES ARITMÉTICAS (SUBTRAÇAO)
-	FUNCTION "-" (ARG_L, ARG_R: FIXED) RETURN FIXED;
+   FUNCTION "-" (ARG_L, ARG_R: FIXED) RETURN FIXED;
    FUNCTION "-" (ARG_L: FIXED; ARG_R: INTEGER) RETURN FIXED;
    FUNCTION "-" (ARG_L: INTEGER; ARG_R: FIXED) RETURN FIXED;
    FUNCTION "-" (ARG_L: FIXED; ARG_R: REAL) RETURN FIXED;
    FUNCTION "-" (ARG_L: REAL; ARG_R: FIXED) RETURN FIXED;
 	
  --FUNÇÕES ARITMÉTICAS (MULTIPLICAÇÃO)
-	FUNCTION "*"(ARG_L, ARG_R: FIXED) RETURN FIXED;
+   FUNCTION "*"(ARG_L, ARG_R: FIXED) RETURN FIXED;
    FUNCTION "*"(ARG_L: FIXED; ARG_R: INTEGER) RETURN FIXED;
    FUNCTION "*"(ARG_L: INTEGER; ARG_R: FIXED) RETURN FIXED;
    FUNCTION "*"(ARG_L: FIXED; ARG_R: REAL) RETURN FIXED;
@@ -50,14 +50,8 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 	      
 
 	  BEGIN
-	   N_BIT := MIN_RANGE;                                -- a primeira posição é o maximo (MSB)
-		ARG1 := ARG;
-		
-		 IF (ARG < 0) THEN                                  -- atribui o sinal de ARG ao fixed
-	      F(MAX_RANGE) := '1';
-	   ELSE
-	      F(MAX_RANGE) := '0';
-	   END IF;
+	   N_BIT := MIN_RANGE;                                -- a primeira posição é o mínimo (LSB)
+	   ARG1 := ARG;
 		
 	   ABC:WHILE( DIV /= 1) OR (DIV /= 0 ) LOOP           -- divide até que o resultado da divisão seja 0 ou 1
 		DIV :=ARG1/2;                                      -- divide por 2
@@ -73,9 +67,14 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 		ELSE             F(N_BIT) := '1';
 		END IF;
 		-- se a conversão dos bits tiver menos bits que o range definido 
-		 FOR i IN N_BIT TO MAX_RANGE - 1 LOOP  -- preenche com zero os bits restante 
+           FOR i IN N_BIT+1 TO MAX_RANGE   LOOP  -- preenche com zero os bits restante 
 	      F(i) := '0';
 	   END LOOP;
+         
+         IF (ARG < 0) THEN                                  --  verifica se o argumento é negativo e faz o complemento de 2
+	   F := F-1;
+           F := NOT F;
+	 END IF;
 		  
 	RETURN F;
 	END FUNCTION;
@@ -900,72 +899,75 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 
 ------------------------- MULTIPLICAÇÃO FIXED FIXED ---------------------
 
-    FUNCTION "*"(ARG_L, ARG_R: FIXED) RETURN FIXED IS
-	    VARIABLE S : FIXED (MAX DOWNTO MIN); -- define o tamanho do vetor de resposta
-	    VARIABLE S1: FIXED (MAX DOWNTO MIN);
-		 
-	 BEGIN
-	   MAX:= (ARG_R'RIGHT + ARG_L'RIGHT -1);
-		MIN:= (ARG_R'LEFT + ARG_L'LEFT);
-		
-	   -- faz a multiplicação dos fixed
-	   FOR i IN ARG_R'LEFT TO ARG_R'RIGHT -1 LOOP     -- percorre pelos bits de arg_r
-		  FOR j IN ARG_L'LEFT TO ARG_L'RIGHT -1 LOOP
-		
-		  S(j+i) := ARG_L(j) AND ARG_R(i);             -- faz a multiplicação bit a bit
-		  
-		  IF i > ARG_L'LOW THEN                       -- acresenta posição quando é o segundo ou mais bit na multiplicação
-		    FOR K IN (ARG_L'LOW + 1) TO i LOOP
-		    S(K-1) := '0';
-		    END LOOP;
-		  END IF;
-		  
-		  S1 := "+"(S, S1); -- SOMA DE DOIS FIXED
-		  END LOOP;
-		 END LOOP;
-       
-		 IF (ARG_R(ARG_R'RIGHT) = '0' AND ARG_L(ARG_L'RIGHT) = '1') OR (ARG_R(ARG_R'RIGHT) = '1' AND ARG_L(ARG_L'RIGHT = '0')) THEN -- coloca o sinal na multiplicação
-		    S1(S1'RIGHT) := '0';
-		 ELSE
-		    S1(S1'RIGHT) := '1'; 
-	    END IF;
-		 
-		 ASSERT (S1'LENGTH < 16); -- verifica o tamanho da reposta para ver se tem menos que 16 bits
-		 
-	 RETURN S1;
-	 END FUNCTION;
-	 
--------------------MULTIPLICAÇÃO FIXED INTEGER ------------------------	 
-	 FUNCTION "*"(ARG_L: FIXED; ARG_R: INTEGER) RETURN FIXED IS
+     FUNCTION "*"(ARG_L: FIXED; ARG_R: INTEGER) RETURN FIXED IS
 	  VARIABLE ARG_R1: FIEXED(MAX_IND DOWNTO 0);
 	  VARIABLE S : FIXED (MAX DOWNTO MIN); -- define o tamanho do vetor de resposta
 	  VARIABLE S1: FIXED (MAX DOWNTO MIN);
+	  VARIABLE N : INTEGER;
+	  VARIABLE ARG_LC : FIXED ( ARG_L'RIGHT DOWNTO ARG_L'LEFT);
+		
 	BEGIN
 	  ARG_R1:= TO_FIXEDI(ARG_R); -- FUNÇÃO DE CONVERSÃO FEITA ANTERIORMENTE
 	  
-	   MAX:= (ARG_R1'RIGHT + ARG_L'RIGHT -1);
+	   MAX:= (16 - ARG_R1'LEFT + ARG_L'LEFT);
 		MIN:= (ARG_R1'LEFT + ARG_L'LEFT);
-	  
-	   FOR i IN ARG_R1'LEFT TO ARG_R1'RIGHT -1 LOOP
-		  FOR j IN ARG_L'LEFT TO ARG_L'RIGHT -1 LOOP
+		S1:= 0;
+		 -- faz a multiplicação dos fixed
+		FOR I IN ARG_R1'LEFT TO ARG_R1'RIGHT LOOP
 		
-		  S(j+i) := ARG_L(j) AND ARG_R1(i);
-		  
-		  IF i > ARG_L'LOW THEN
-		    FOR K IN (ARG_L'LOW + 1) TO i LOOP
-		    S(K-1) := '0';
+		 IF ARG_R1(I) = 0 THEN
+		  S:= 0;
+		 ELSE
+		  N := 0;
+		  IF i > ARG_R1'LEFT THEN
+		    FOR K IN (ARG_R1'LEFT) TO i LOOP
+		    S(S'LEFT+N) := '0';
+			 N := N + 1;
 		    END LOOP;
 		  END IF;
 		  
-		  S1 := "+"(S, S1); -- SOMA DE DOIS FIXED
-		  END LOOP;
+		  IF I = ARG_R1'RIGHT THEN
+		   IF ARG_R(ARG_R1'RIGHT) = '1' THEN
+			 ARG_LC := ARG_L + 1;
+			 FOR K IN ARG_L'LEFT TO ARG_L'RIGHT LOOP
+		    S(S'LEFT+N) := NOT ARG_LC(K);
+			 N := N+1;
+		    END LOOP;
+	     
+		    FOR K IN N TO S'RIGHT LOOP
+		    S(S'LEFT+K) := NOT ARG_LC(ARG_L'RIGHT);
+		    END LOOP;
+			
+			ELSE
+			
+			 FOR K IN ARG_L'LEFT TO ARG_L'RIGHT LOOP
+		    S(S'LEFT+N) := ARG_L(K);
+			 N := N+1;
+		    END LOOP;
+			 
+			 FOR K IN N TO S'RIGHT LOOP
+		    S(S'LEFT+K) := ARG_L(ARG_L'RIGHT);
+		    END LOOP;
+			END IF;
+			
+		  ELSE
+			
+		    FOR K IN ARG_L'LEFT TO ARG_L'RIGHT LOOP
+		    S(S'LEFT+N) := ARG_L(K);
+			 N := N+1;
+		    END LOOP;
+			 
+			 FOR K IN N TO S'RIGHT LOOP
+		    S(S'LEFT+K) := ARG_L(ARG_L'RIGHT);
+		    END LOOP;
+			
+			END IF;
+		 
+        S1 := "+"(S, S1); -- SOMA DE DOIS FIXED
+		  
+		  END IF;
 		 END LOOP;
-       
-		IF (ARG_R1(ARG_R1'RIGHT) = '0' AND ARG_L(ARG_L'RIGHT) = '1') OR (ARG_R1(ARG_R1'RIGHT) = '1' AND ARG_L(ARG_L'RIGHT = '0')) THEN
-		    S1(S1'RIGHT) := '0';
-		 ELSE
-		    S1(S1'RIGHT) := '1'; 
-	    END IF;
+		 
 		 
 		 ASSERT (S1'LENGTH < 16); -- verifica o tamanho da reposta para ver se tem menos que 16 bits
 		 
@@ -977,72 +979,149 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 	  VARIABLE ARG_L1: FIEXED(MAX_IND DOWNTO 0);
 	  VARIABLE S : FIXED (MAX DOWNTO MIN); -- define o tamanho do vetor de resposta
 	  VARIABLE S1: FIXED (MAX DOWNTO MIN);
+	  VARIABLE N : INTEGER;
+	  
 	 BEGIN
 	   ARG_L1:= TO_FIXEDI(ARG_L); -- FUNÇÃO DE CONVERSÃO FEITA ANTERIORMENTE
 	  
-	   MAX:= (ARG_R'RIGHT + ARG_L1'RIGHT -1);
+	   MAX:= (16 - ARG_R'LEFT + ARG_L1'LEFT);
 		MIN:= (ARG_R'LEFT + ARG_L1'LEFT);
-	  
-	  ASSERT ((ARG_R'LENGTH + ARG_L1'LENGTH -2) < 16); -- verifica o tamanho da reposta para ver se tem menos que 16 bits
-	   FOR i IN ARG_R'LEFT TO ARG_R'RIGHT -1 LOOP
-		  FOR j IN ARG_L1'LEFT TO ARG_L1'RIGHT -1 LOOP
+		S1:= 0;
+		 -- faz a multiplicação dos fixed
+		FOR I IN ARG_R'LEFT TO ARG_R'RIGHT LOOP
 		
-		  S(j+i) := ARG_L1(j) AND ARG_R(i);
-		  
-		  IF i > ARG_L'LOW THEN
-		    FOR K IN (ARG_L1'LOW + 1) TO i LOOP
-		    S(K-1) := '0';
+		 IF ARG_R(I) = 0 THEN
+		  S:= 0;
+		 ELSE
+		  N := 0;
+		  IF i > ARG_R'LEFT THEN
+		    FOR K IN (ARG_R'LEFT) TO i LOOP
+		    S(S'LEFT+N) := '0';
+			 N := N + 1;
 		    END LOOP;
 		  END IF;
 		  
-		  S1 := "+"(S, S1); -- SOMA DE DOIS FIXED
-		  END LOOP;
+		  IF I = ARG_R'RIGHT THEN
+		   IF ARG_R(ARG_R'RIGHT) = '1' THEN
+			 ARG_L1 := ARG_L1 + 1;
+			 FOR K IN ARG_L1'LEFT TO ARG_L1'RIGHT LOOP
+		    S(S'LEFT+N) := NOT ARG_L1(K);
+			 N := N+1;
+		    END LOOP;
+	     
+		    FOR K IN N TO S'RIGHT LOOP
+		    S(S'LEFT+K) := NOT ARG_L1(ARG_L1'RIGHT);
+		    END LOOP;
+			
+			ELSE
+			
+			 FOR K IN ARG_L1'LEFT TO ARG_L1'RIGHT LOOP
+		    S(S'LEFT+N) := ARG_L1(K);
+			 N := N+1;
+		    END LOOP;
+			 
+			 FOR K IN N TO S'RIGHT LOOP
+		    S(S'LEFT+K) := ARG_L1(ARG_L1'RIGHT);
+		    END LOOP;
+			END IF;
+			
+		  ELSE
+			
+		    FOR K IN ARG_L1'LEFT TO ARG_L1'RIGHT LOOP
+		    S(S'LEFT+N) := ARG_L1(K);
+			 N := N+1;
+		    END LOOP;
+			 
+			 FOR K IN N TO S'RIGHT LOOP
+		    S(S'LEFT+K) := ARG_L1(ARG_L1'RIGHT);
+		    END LOOP;
+			
+			END IF;
+		 
+        S1 := "+"(S, S1); -- SOMA DE DOIS FIXED
+		  
+		  END IF;
 		 END LOOP;
-       
-		 IF (ARG_R'RIGHT = '0' AND ARG_L1'RIGHT = '1') OR (ARG_R'RIGHT = '1' AND ARG_L1'RIGHT = '0') THEN
-		    S1'RIGHT := '0';
-		 ELSE
-		    S1'RIGHT := '1'; 
-	    END IF;
+		 
 		 
 		 ASSERT (S1'LENGTH < 16); -- verifica o tamanho da reposta para ver se tem menos que 16 bits
+		 
 	 RETURN S1;
 	 END FUNCTION;
-	 
 --------------------------MULTIPLICAÇÃO FIXED REAL ------------------------------------	 
 	 FUNCTION "*"(ARG_L: FIXED; ARG_R: REAL) RETURN FIXED IS
 	  VARIABLE ARG_R1: FIEXED(+7 DOWNTO -8);
 	  VARIABLE S : FIXED (MAX DOWNTO MIN); -- define o tamanho do vetor de resposta
 	  VARIABLE S1: FIXED (MAX DOWNTO MIN);
+	  VARIABLE N : INTEGER;
+	  VARIABLE ARG_LC : FIXED ( ARG_L'RIGHT DOWNTO ARG_L'LEFT);
+	  
 	 BEGIN
 	  ARG_R1:= TO_FIXED(ARG_R,7,-8); -- FUNÇÃO DE CONVERSÃO FEITA ANTERIORMENTE
 	  
-	  MAX:= (ARG_R1'RIGHT + ARG_L'RIGHT -1);
-	  MIN:= (ARG_R1'LEFT + ARG_L'LEFT);
 	  
-	 ASSERT ((ARG_R1'LENGTH + ARG_L'LENGTH -2) < 16); -- verifica o tamanho da reposta para ver se tem menos que 16 bits
-	   FOR i IN ARG_R1'LEFT TO ARG_R1'RIGHT -1 LOOP
-		  FOR j IN ARG_L'LEFT TO ARG_L'RIGHT -1 LOOP
+	   MAX:= (16 - ARG_R1'LEFT + ARG_L'LEFT);
+		MIN:= (ARG_R1'LEFT + ARG_L'LEFT);
+		S1:= 0;
+		 -- faz a multiplicação dos fixed
+		FOR I IN ARG_R1'LEFT TO ARG_R1'RIGHT LOOP
 		
-		  S(j+i) := ARG_L(j) AND ARG_R1(i);
-		  
-		  IF i > ARG_L'LOW THEN
-		    FOR K IN (ARG_L'LOW + 1) TO i LOOP
-		    S(K-1) := '0';
+		 IF ARG_R1(I) = 0 THEN
+		  S:= 0;
+		 ELSE
+		  N := 0;
+		  IF i > ARG_R1'LEFT THEN
+		    FOR K IN (ARG_R1'LEFT) TO i LOOP
+		    S(S'LEFT+N) := '0';
+			 N := N + 1;
 		    END LOOP;
 		  END IF;
 		  
-		  S1 := "+"(S, S1); -- SOMA DE DOIS FIXED
-		  END LOOP;
-		 END LOOP;
-       
-		 IF (ARG_R1'RIGHT = '0' AND ARG_L'RIGHT = '1') OR (ARG_R1'RIGHT = '1' AND ARG_L'RIGHT = '0') THEN
-		    S1'RIGHT := '0';
-		 ELSE
-		    S1'RIGHT := '1'; 
-	    END IF;
+		  IF I = ARG_R1'RIGHT THEN
+		   IF ARG_R(ARG_R1'RIGHT) = '1' THEN
+			 ARG_LC := ARG_L + 1;
+			 FOR K IN ARG_L'LEFT TO ARG_L'RIGHT LOOP
+		    S(S'LEFT+N) := NOT ARG_LC(K);
+			 N := N+1;
+		    END LOOP;
+	     
+		    FOR K IN N TO S'RIGHT LOOP
+		    S(S'LEFT+K) := NOT ARG_LC(ARG_L'RIGHT);
+		    END LOOP;
+			
+			ELSE
+			
+			 FOR K IN ARG_L'LEFT TO ARG_L'RIGHT LOOP
+		    S(S'LEFT+N) := ARG_L(K);
+			 N := N+1;
+		    END LOOP;
+			 
+			 FOR K IN N TO S'RIGHT LOOP
+		    S(S'LEFT+K) := ARG_L(ARG_L'RIGHT);
+		    END LOOP;
+			END IF;
+			
+		  ELSE
+			
+		    FOR K IN ARG_L'LEFT TO ARG_L'RIGHT LOOP
+		    S(S'LEFT+N) := ARG_L(K);
+			 N := N+1;
+		    END LOOP;
+			 
+			 FOR K IN N TO S'RIGHT LOOP
+		    S(S'LEFT+K) := ARG_L(ARG_L'RIGHT);
+		    END LOOP;
+			
+			END IF;
 		 
-		  ASSERT (S1'LENGTH < 16); -- verifica o tamanho da reposta para ver se tem menos que 16 bits
+        S1 := "+"(S, S1); -- SOMA DE DOIS FIXED
+		  
+		  END IF;
+		 END LOOP;
+		 
+		 
+		 ASSERT (S1'LENGTH < 16); -- verifica o tamanho da reposta para ver se tem menos que 16 bits
+		 
 	 RETURN S1;
 	 END FUNCTION;
 	 
@@ -1051,35 +1130,71 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 	  VARIABLE ARG_L1: FIEXED(7 DOWNTO -8);
 	  VARIABLE S : FIXED (MAX DOWNTO MIN); -- define o tamanho do vetor de resposta
 	  VARIABLE S1: FIXED (MAX DOWNTO MIN);
+	  VARIABLE N : INTEGER;
+		 
 	 BEGIN
-	  ARG_L1:= TO_FIXED(ARG_L,MAX_IND,MIN_IND); -- FUNÇÃO DE CONVERSÃO FEITA ANTERIORMENTE
+	  ARG_L1:= TO_FIXED(ARG_L,7,-8); -- FUNÇÃO DE CONVERSÃO FEITA ANTERIORMENTE
 	  
-	  MAX:= (ARG_R'RIGHT + ARG_L1'RIGHT -1);
-	  MIN:= (ARG_R'LEFT + ARG_L1'LEFT);
-	  
-	  ASSERT ((ARG_R'LENGTH + ARG_L1'LENGTH -2) < 16); -- verifica o tamanho da reposta para ver se tem menos que 16 bits
-	   FOR i IN ARG_R'LEFT TO ARG_R'RIGHT -1 LOOP
-		  FOR j IN ARG_L1'LEFT TO ARG_L1'RIGHT -1 LOOP
+	   MAX:= (16-ARG_R'LEFT + ARG_L1'LEFT);
+		MIN:= (ARG_R'LEFT + ARG_L1'LEFT);
+		S1:= 0;
+		 -- faz a multiplicação dos fixed
+		FOR I IN ARG_R'LEFT TO ARG_R'RIGHT LOOP
 		
-		  S(j+i) := ARG_L1(j) AND ARG_R(i);
-		  
-		  IF i > ARG_L'LOW THEN
-		    FOR K IN (ARG_L1'LOW + 1) TO i LOOP
-		    S(K-1) := '0';
+		 IF ARG_R(I) = 0 THEN
+		  S:= 0;
+		 ELSE
+		  N := 0;
+		  IF i > ARG_R'LEFT THEN
+		    FOR K IN (ARG_R'LEFT) TO i LOOP
+		    S(S'LEFT+N) := '0';
+			 N := N + 1;
 		    END LOOP;
 		  END IF;
 		  
-		  S1 := "+"(S, S1); -- SOMA DE DOIS FIXED
-		  END LOOP;
-		 END LOOP;
-       
-		 IF (ARG_R'RIGHT = '0' AND ARG_L1'RIGHT = '1') OR (ARG_R'RIGHT = '1' AND ARG_L1'RIGHT = '0') THEN
-		    S1'RIGHT := '0';
-		 ELSE
-		    S1'RIGHT := '1'; 
-	    END IF;
+		  IF I = ARG_R'RIGHT THEN
+		   IF ARG_R(ARG_R'RIGHT) = '1' THEN
+			 ARG_L1 := ARG_L1 + 1;
+			 FOR K IN ARG_L1'LEFT TO ARG_L1'RIGHT LOOP
+		    S(S'LEFT+N) := NOT ARG_L1(K);
+			 N := N+1;
+		    END LOOP;
+	     
+		    FOR K IN N TO S'RIGHT LOOP
+		    S(S'LEFT+K) := NOT ARG_L1(ARG_L1'RIGHT);
+		    END LOOP;
+			
+			ELSE
+			
+			 FOR K IN ARG_L1'LEFT TO ARG_L1'RIGHT LOOP
+		    S(S'LEFT+N) := ARG_L1(K);
+			 N := N+1;
+		    END LOOP;
+			 
+			 FOR K IN N TO S'RIGHT LOOP
+		    S(S'LEFT+K) := ARG_L1(ARG_L1'RIGHT);
+		    END LOOP;
+			END IF;
+			
+		  ELSE
+			
+		    FOR K IN ARG_L1'LEFT TO ARG_L1'RIGHT LOOP
+		    S(S'LEFT+N) := ARG_L1(K);
+			 N := N+1;
+		    END LOOP;
+			 
+			 FOR K IN N TO S'RIGHT LOOP
+		    S(S'LEFT+K) := ARG_L1(ARG_L1'RIGHT);
+		    END LOOP;
+			
+			END IF;
 		 
-		 ASSERT (S1'LENGTH < 16); -- verifica o tamanho da reposta para ver se tem menos que 16 bits
+        S1 := "+"(S, S1); -- SOMA DE DOIS FIXED
+		  
+		  END IF;
+		 END LOOP;
+		 
+		 
 	 RETURN S1;
 	 END FUNCTION;
 	
