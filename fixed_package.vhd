@@ -53,7 +53,7 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 	   N_BIT := MIN_RANGE;                                -- a primeira posição é o maximo (MSB)
 		ARG1 := ARG;
 		
-		 IF (ARG < 0.0) THEN                                  -- atribui o sinal de ARG ao fixed
+		 IF (ARG < 0) THEN                                  -- atribui o sinal de ARG ao fixed
 	      F(MAX_RANGE) := '1';
 	   ELSE
 	      F(MAX_RANGE) := '0';
@@ -83,7 +83,7 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 --CONVERSÃO DE DADO REAL PARA FIXED	
 	FUNCTION TO_FIXED(ARG: REAL; MAX_RANGE:FIXED_RANGE; MIN_RANGE: FIXED_RANGE) RETURN FIXED IS
 	   VARIABLE R_I, R_F, DIV, INT_ARG, j : INTEGER;        -- variaveis intermediárias
-	   VARIABLE F_ARG, F_ARG1, F_ARG2, INT_ARG_R : REAL;
+	   VARIABLE F_ARG, F_ARG1, R_F_R, F_ARG2, INT_ARG_R : REAL;
 	   VARIABLE F : FIXED(MAX_RANGE DOWNTO MIN_RANGE);      -- bit_vector do subtipo fixed onde será escrito o número real  
 	
 	   BEGIN
@@ -106,7 +106,8 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 	   FOR i IN MIN_RANGE TO - 1 LOOP    		                 -- preenche a parte fracionária do fixed
 		   F_ARG2 := F_ARG*2.0;
 			R_F := INTEGER(F_ARG2);                           -- armazena a parte inteira da multiplicaçao por dois
-		   F_ARG := F_ARG2 - R_F;                            -- separa a parte inteira da parte fracionaria
+		   R_F_R := REAL(R_F);
+			F_ARG := F_ARG2 - R_F_R;                            -- separa a parte inteira da parte fracionaria
 	      IF R_F = 0 THEN                                   -- preenche o bit correspondente com o valor em binário
 		      F(i) := '0';
 		   ELSE
@@ -143,6 +144,7 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 --CONVERSÃO DE DADO FIXED PARA INTEGER
 	FUNCTION TO_INTEGER(ARG: FIXED) RETURN INTEGER IS
 		VARIABLE INT: INTEGER;										--valor retornado
+	   VARIABLE MAX_RANGE : FIXED_RANGE:= ARG'LEFT;       -- armazena o limite esquerdo do fixed
 	BEGIN		
 		INT := 0;								
 		
@@ -552,7 +554,7 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 			   FOR I IN ARG_R'LOW TO ARG_R'HIGH LOOP                		 --subtrai um
 				   ARG_R(I)	:= ARG_R(I) XOR M_UM XOR  C1;
 				   C1			:= ( ARG_R(I) AND M_UM ) XOR ( M_UM AND C1 ) XOR ( ARG_R(I) AND C1 ) ;
-			   END LOOP
+			   END LOOP;
 				
 				FOR I IN ARG_R'LOW TO ARG_R'HIGH LOOP                     --complemento de 1 inverso
 			      ARG_R(I):= NOT ARG_R(I);
@@ -618,7 +620,7 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 			   FOR I IN ARG_R'LOW TO ARG_R'HIGH LOOP                		 --subtrai um
 				   ARG_R(I)	:= ARG_R(I) XOR M_UM XOR  C1;
 				   C1			:= ( ARG_R(I) AND M_UM ) XOR ( M_UM AND C1 ) XOR ( ARG_R(I) AND C1 ) ;
-			   END LOOP
+			   END LOOP;
 				
 				FOR I IN ARG_R'LOW TO ARG_R'HIGH LOOP                     --complemento de 1 inverso
 			      ARG_R(I):= NOT ARG_R(I);
@@ -688,7 +690,7 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 			   FOR I IN ARG_R'LOW TO ARG_R'HIGH LOOP                		 --subtrai um
 				   ARG_R(I)	:= ARG_R(I) XOR M_UM XOR  C1;
 				   C1			:= ( ARG_R(I) AND M_UM ) XOR ( M_UM AND C1 ) XOR ( ARG_R(I) AND C1 ) ;
-			   END LOOP
+			   END LOOP;
 				
 				FOR I IN ARG_R'LOW TO ARG_R'HIGH LOOP                     --complemento de 1 inverso
 			      ARG_R(I):= NOT ARG_R(I);
@@ -785,7 +787,7 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 			   FOR I IN ARG_R'LOW TO ARG_R'HIGH LOOP                		 --subtrai um
 				   ARG_R(I)	:= ARG_R(I) XOR M_UM XOR  C1;
 				   C1			:= ( ARG_R(I) AND M_UM ) XOR ( M_UM AND C1 ) XOR ( ARG_R(I) AND C1 ) ;
-			   END LOOP
+			   END LOOP;
 				
 				FOR I IN ARG_R'LOW TO ARG_R'HIGH LOOP                     --complemento de 1 inverso
 			      ARG_R(I):= NOT ARG_R(I);
@@ -878,7 +880,7 @@ PACKAGE BODY FIXED_PACKAGE IS  -- corpo do pacote
 			   FOR I IN ARG_R'LOW TO ARG_R'HIGH LOOP                		 --subtrai um
 				   ARG_R(I)	:= ARG_R(I) XOR M_UM XOR  C1;
 				   C1			:= ( ARG_R(I) AND M_UM ) XOR ( M_UM AND C1 ) XOR ( ARG_R(I) AND C1 ) ;
-			   END LOOP
+			   END LOOP;
 				
 				FOR I IN ARG_R'LOW TO ARG_R'HIGH LOOP                     --complemento de 1 inverso
 			      ARG_R(I):= NOT ARG_R(I);
